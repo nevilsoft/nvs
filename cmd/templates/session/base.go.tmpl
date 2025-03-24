@@ -1,0 +1,50 @@
+package session
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/storage/redis"
+
+	"{{ .ModuleName }}/config"
+)
+
+type SessionManager struct {
+	Store *session.Store
+}
+
+func NewSessionManager() *SessionManager {
+	storage := redis.New(redis.Config{
+		Host:     config.Conf.RedisHost,
+		Port:     config.Conf.RedisPort,
+		Password: config.Conf.RedisPassword,
+		Database: 2,
+		Reset:    false,
+	})
+
+	store := session.New(session.Config{
+		Storage:   storage,
+		KeyLookup: "cookie:sid",
+	})
+
+	return &SessionManager{Store: store}
+}
+
+func (sm *SessionManager) Middleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		sess, err := sm.Store.Get(c)
+		if err != nil {
+			return err
+		}
+		c.Locals("session", sess)
+		return c.Next()
+	}
+}
+
+// GetSession ดึง session ได้ง่ายขึ้น
+func GetSession(c *fiber.Ctx) (*session.Session, error) {
+	sess, ok := c.Locals("session").(*session.Session)
+	if !ok {
+		return nil, fiber.ErrInternalServerError
+	}
+	return sess, nil
+}

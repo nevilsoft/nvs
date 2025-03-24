@@ -1,0 +1,44 @@
+package routes
+
+import (
+	"log"
+	"{{ .ModuleName }}/api/v1/controllers"
+	"{{ .ModuleName }}/constants"
+	"{{ .ModuleName }}/di"
+	"{{ .ModuleName }}/handler"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func InitDIContainer() *di.AppContainer {
+	container, err := di.NewAppContainer()
+	if err != nil {
+		log.Panicf("❌ Failed to initialize DI Container: %v", err)
+	}
+	log.Println("✅ DI Container initialized successfully")
+	return container
+}
+
+func SetupRoutes(app *fiber.App, container *di.AppContainer) {
+	v1API := app.Group("/api/v1")
+
+	RegisterRoutes(v1API, container)
+	notFoundRoute(app)
+}
+
+func RegisterRoutes(api fiber.Router, container *di.AppContainer) {
+	mws := container.AuthMiddleware
+	api.Get("/server/info", mws.RateLimit(constants.Tier3, 0), controllers.Health)
+
+}
+
+func notFoundRoute(a *fiber.App) {
+	// Register new special route.
+	a.Use(
+		// Anonymous function.
+		func(c *fiber.Ctx) error {
+			// Return HTTP 404 status and JSON response.
+			return handler.BuildError(c, constants.EndpointNotFoundCode, fiber.StatusNotFound, nil, true)
+		},
+	)
+}

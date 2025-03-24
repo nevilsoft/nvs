@@ -1,0 +1,10 @@
+package middleware
+
+import (
+	"github.com/google/wire"
+)
+
+// ProviderSet รวม Providers ของ Controllers
+var ProviderSet = wire.NewSet(
+	wire.Struct(new(Middleware), "*"),
+)

@@ -1,0 +1,106 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
+
+	"{{ .ModuleName }}/cache"
+	"{{ .ModuleName }}/cmd"
+	"{{ .ModuleName }}/config"
+	"{{ .ModuleName }}/db"
+	"{{ .ModuleName }}/utils/localized"
+)
+
+func main() {
+	if godotenv.Load("./.env.local") != nil {
+		log.Fatal("Error loading .env file")
+	}
+	confVars, configErr := config.New()
+	if configErr != nil {
+		log.Fatal(configErr)
+	}
+
+	if err := localized.LoadLanguage(confVars.LanguageDir); err != nil {
+		log.Fatal(err)
+	}
+	localized.SetDefaultLanguage(localized.DefaultLanguage)
+
+	if confVars.PostgresUser != "" {
+		dbErr := db.Init()
+
+		if dbErr != nil {
+			log.Fatal(dbErr)
+		}
+
+		defer db.Close()
+	}
+
+	if confVars.RedisHost != "" {
+		cacheErr := cache.Init()
+
+		if cacheErr != nil {
+			log.Fatal(cacheErr)
+		}
+
+		defer cache.Close()
+	}
+
+	app := cmd.InitApp()
+
+	if confVars.Environment == "development" {
+		startServer(app, confVars.Port)
+	} else {
+		startServerWithGracefulShutdown(app, confVars.Port)
+	}
+}
+
+// startServerWithGracefulShutdown starts a Fiber server and listens for OS interrupt signals to gracefully
+// shutdown the server. It handles the creation of a signal channel to catch interrupt signals and initiates
+// a server shutdown when a signal is received. The function logs the startup and shutdown processes, and
+// ensures that all idle connections are closed properly upon shutdown.
+func startServerWithGracefulShutdown(a *fiber.App, fiberConnURL string) {
+	// Create channel for idle connections.
+	idleConnsClosed := make(chan struct{})
+
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt) // Catch OS signals.
+		<-sigint
+
+		// Received an interrupt signal, shutdown.
+		if err := a.Shutdown(); err != nil {
+			// Error from closing listeners, or context timeout:
+			log.Printf("Oops... Server is not shutting down! Reason: %v", err)
+		}
+
+		close(idleConnsClosed)
+	}()
+
+	// Log server startup message.
+	log.Println("🚀 Server is starting")
+
+	// Run server.
+	if err := a.Listen(fiberConnURL); err != nil {
+		fmt.Printf("Oops... Server is not running! Reason: %v", err)
+	}
+
+	<-idleConnsClosed
+}
+
+// startServer starts a Fiber server using the connection URL built by the ConnectionURLBuilder function.
+// It logs a message indicating that the server is running and listening on the specified URL.
+// If the server fails to start, it logs an error message with the reason for failure.
+// The server can be stopped by pressing Ctrl+C.
+func startServer(a *fiber.App, fiberConnURL string) {
+	log.Println("🚀 Server is starting: ", fiberConnURL)
+	fmt.Println("Server is running... Press Ctrl+C to stop")
+
+	if err := a.Listen(fiberConnURL); err != nil {
+		log.Printf("Oops... Server is not running! Reason: %v", err)
+	}
+}

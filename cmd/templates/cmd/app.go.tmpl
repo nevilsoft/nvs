@@ -1,0 +1,111 @@
+package cmd
+
+import (
+	"encoding/json"
+	"strings"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+
+	"{{ .ModuleName }}/api/v1/routes"
+	"{{ .ModuleName }}/config"
+	"{{ .ModuleName }}/constants"
+	"{{ .ModuleName }}/handler"
+	"{{ .ModuleName }}/session"
+	"{{ .ModuleName }}/utils/localized"
+)
+
+// InitApp returns a new Fiber app with CORS middleware and API routes.
+//
+// The returned app has the following configuration:
+//
+//   - JSONEncoder and JSONDecoder are set to the standard library's json.Marshal
+//     and json.Unmarshal functions.
+//   - DisableStartupMessage is set to true to prevent the app from printing a
+//     startup message to the console.
+//
+// The app also has a CORS middleware that allows requests from any origin,
+// with the following configuration:
+//
+// - AllowOrigins is set to "*".
+// - AllowHeaders is set to "Origin, Content-Type, Accept, Authorization".
+// - AllowMethods is set to "GET, POST, PUT, DELETE, PATCH, HEAD".
+//
+// Finally, the app has all routes defined in routes.SetupRoutes set up.
+func InitApp() *fiber.App {
+	app := fiber.New(fiber.Config{
+		JSONEncoder:           json.Marshal,
+		JSONDecoder:           json.Unmarshal,
+		DisableStartupMessage: true,
+		ErrorHandler:          handler.ErrorHandler,
+		ServerHeader:          "Nevilsoft",
+		ProxyHeader:           "X-Forwarded-For",
+		ReadTimeout:           5 * time.Second,
+		WriteTimeout:          10 * time.Second,
+	})
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     config.Conf.AllowOrigins,
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Request-Id, X-CSRF-Token, Referer",
+		AllowMethods:     "GET, POST, PUT, DELETE, PATCH",
+		AllowCredentials: false,
+	}))
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		c.Set("X-Content-Type-Options", "nosniff")
+		c.Set("X-Frame-Options", "DENY")
+		c.Set("X-XSS-Protection", "1; mode=block")
+		return c.Next()
+	})
+
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
+
+	app.Use(func(c *fiber.Ctx) error {
+		lang := strings.ToLower(c.Get(fiber.HeaderAcceptLanguage, string(constants.LanguageDefault)))
+		if _, exists := localized.Language[lang]; !exists {
+			lang = string(constants.LanguageDefault)
+		}
+
+		c.Locals(constants.LanguageKey, lang)
+		return c.Next()
+	})
+	sessManager := session.NewSessionManager()
+
+	app.Use(sessManager.Middleware())
+
+	// app.Use(csrf.New(csrf.Config{
+	// 	ErrorHandler: fiber.ErrorHandler(func(c *fiber.Ctx, err error) error {
+	// 		return H.BuildError(c, C.BadRequestCode, fiber.StatusBadRequest, err.Error(), true)
+	// 	}),
+	// 	KeyLookup:      "cookie:csrf_",
+	// 	CookieDomain:   ".slipsure.me",
+	// 	Expiration:     2 * time.Hour,
+	// 	CookieSecure:   true,
+	// 	CookieHTTPOnly: true,
+	// 	// Storage: redis.New(redis.Config{
+	// 	// 	Host:      config.Conf.RedisHost,
+	// 	// 	Port:      config.Conf.RedisPort,
+	// 	// 	Password:  config.Conf.RedisPassword,
+	// 	// 	Database:  1,
+	// 	// 	Reset:     false,
+	// 	// 	TLSConfig: nil,
+	// 	// }),
+	// 	Session: sessManager.Store,
+	// 	Next: func(c *fiber.Ctx) bool {
+	// 		return strings.HasPrefix(c.Path(), "/api/v1/external")
+	// 	},
+	// }))
+	container := routes.InitDIContainer()
+
+	// mws := container.AuthMiddleware
+	// app.Use(mws.UserAgentFilter())
+
+	routes.SetupRoutes(app, container)
+
+	return app
+}

@@ -1,0 +1,15 @@
+package controllers
+
+import (
+	"{{ .ModuleName }}/config"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func Health(c *fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"env": config.Conf.Environment,
+		"ok":  1,
+		"v":   config.Conf.Version,
+	})
+}
