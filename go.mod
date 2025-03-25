@@ -1,4 +1,4 @@
-module github.com/nevilsoft/nvs-cli
+module github.com/nevilsoft/nvscli
 
 go 1.24.0
 

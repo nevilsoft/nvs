@@ -9,9 +9,9 @@ import (
 
 // RootCmd คือคำสั่งหลักของ CLI
 var RootCmd = &cobra.Command{
-	Use:   "mycli",
+	Use:   "nvscli",
 	Short: "CLI สำหรับสร้างโครงสร้างโปรเจกต์ Golang",
-	Long:  `CLI ที่ช่วยสร้างโครงสร้างโปรเจกต์ Golang พร้อมตั้งค่าต่างๆ เช่น Fiber, gRPC, PostgreSQL`,
+	Long:  `CLI ที่ช่วยสร้างโครงสร้างโปรเจกต์ Golang พร้อมตั้งค่าต่างๆ เช่น Fiber, PostgreSQL`,
 }
 
 // Execute ทำให้ CLI ทำงาน
