@@ -1,3 +1,18 @@
+/*
+ * Created on Tue Mar 04 2025
+ *
+ * © 2025 Nevilsoft Part., Ltd. All Rights Reserved.
+ *
+ * * ข้อมูลลับและสงวนสิทธิ์ *
+ * ไฟล์นี้เป็นทรัพย์สินของ Nevilsoft Part., Ltd. และมีข้อมูลที่เป็นความลับทางธุรกิจ
+ * อนุญาตให้เฉพาะพนักงานที่ได้รับสิทธิ์เข้าถึงเท่านั้น
+ * ห้ามเผยแพร่ คัดลอก ดัดแปลง หรือใช้งานโดยไม่ได้รับอนุญาตจากฝ่ายบริหาร
+ *
+ * การละเมิดข้อตกลงนี้ อาจมีผลให้ถูกลงโทษทางวินัย รวมถึงการดำเนินคดีตามกฎหมาย
+ * ตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560 (มาตรา 7, 9, 10)
+ * และกฎหมายอื่นที่เกี่ยวข้อง
+ */
+
 package config
 
 import (
@@ -7,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"{{ .ModuleName }}/constants"
+	"testcreate/constants"
 )
 
 type Config struct {
@@ -15,8 +30,6 @@ type Config struct {
 	Environment string
 	ServiceName string
 	Version     string
-
-	LanguageDir string
 
 	PostgresHost     string
 	PostgresPort     string
@@ -61,15 +74,13 @@ func New() (*Config, error) {
 	serviceName := vars.optional("SERVICE_NAME", "go-service")
 	version := vars.optional("VERSION", "1.0.0")
 
-	LanguageDir := vars.optional("LANGUAGE_DIR", "local")
-
-	postgresHost := vars.mandatory("POSTGRES_HOST")
-	postgresPort := vars.mandatory("POSTGRES_PORT")
-	postgresUser := vars.mandatory("POSTGRES_USER")
-	postgresDB := vars.mandatory("POSTGRES_DB")
+	postgresHost := vars.optional("POSTGRES_HOST", "")
+	postgresPort := vars.optional("POSTGRES_PORT", "5432")
+	postgresUser := vars.optional("POSTGRES_USER", "")
+	postgresDB := vars.optional("POSTGRES_DB", "")
 	postgresPassword := vars.optional("POSTGRES_PASSWORD", "")
 
-	redisHost := vars.mandatory("REDIS_HOST")
+	redisHost := vars.optional("REDIS_HOST", "")
 	redisPort := vars.optionalInt("REDIS_PORT", 6379)
 	redisPassword := vars.optional("REDIS_PASSWORD", "")
 
@@ -91,8 +102,6 @@ func New() (*Config, error) {
 		Environment: environment,
 		ServiceName: serviceName,
 		Version:     version,
-
-		LanguageDir: LanguageDir,
 
 		PostgresHost:     postgresHost,
 		PostgresPort:     postgresPort,
