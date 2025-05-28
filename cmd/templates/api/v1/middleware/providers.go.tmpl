@@ -12,7 +12,7 @@
  * ตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560 (มาตรา 7, 9, 10)
  * และกฎหมายอื่นที่เกี่ยวข้อง
  */
- 
+
 package middleware
 
 import (
@@ -21,5 +21,5 @@ import (
 
 // ProviderSet รวม Providers ของ Controllers
 var ProviderSet = wire.NewSet(
-	wire.Struct(new(Middleware), "*"),
+	NewBaseMiddleware,
 )

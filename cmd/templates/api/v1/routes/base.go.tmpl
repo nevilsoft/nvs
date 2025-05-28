@@ -17,7 +17,6 @@ package routes
 
 import (
 	"log"
-	"{{ .ModuleName }}/api/v1/controllers"
 	"{{ .ModuleName }}/constants"
 	"{{ .ModuleName }}/di"
 	"{{ .ModuleName }}/handler"
@@ -43,7 +42,8 @@ func SetupRoutes(app *fiber.App, container *di.AppContainer) {
 
 func RegisterRoutes(api fiber.Router, container *di.AppContainer) {
 	mws := container.AuthMiddleware
-	api.Get("/server/info", mws.RateLimit(constants.Tier3, 0), controllers.Health)
+	baseC := container.BaseController
+	api.Get("/server/info", mws.RateLimit(constants.Tier3, 0), baseC.Health)
 
 }
 

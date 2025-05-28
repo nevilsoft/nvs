@@ -89,9 +89,12 @@ func InitApp() *fiber.App {
 		c.Locals(constants.LanguageKey, lang)
 		return c.Next()
 	})
-	sessManager := session.NewSessionManager()
+	
+	if config.Conf.RedisHost != "" {	
+		sessManager := session.NewSessionManager()
 
-	app.Use(sessManager.Middleware())
+		app.Use(sessManager.Middleware())
+	}
 
 	// app.Use(csrf.New(csrf.Config{
 	// 	ErrorHandler: fiber.ErrorHandler(func(c *fiber.Ctx, err error) error {

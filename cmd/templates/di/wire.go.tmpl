@@ -19,7 +19,9 @@
 package di
 
 import (
-	"testcreate/api/v1/middleware"
+	"{{ .ModuleName }}/api/v1/controllers"
+	"{{ .ModuleName }}/api/v1/middleware"
+	"{{ .ModuleName }}/api/v1/services"
 
 	"github.com/google/wire"
 )
@@ -27,11 +29,14 @@ import (
 func NewAppContainer() (*AppContainer, error) {
 	wire.Build(
 		middleware.ProviderSet,
+		services.ProviderSet,
+		controllers.ProviderSet,
 		wire.Struct(new(AppContainer), "*"),
 	)
 	return &AppContainer{}, nil
 }
 
 type AppContainer struct {
-	AuthMiddleware *middleware.Middleware
+	AuthMiddleware *middleware.BaseMiddleware
+	BaseController *controllers.BaseController
 }

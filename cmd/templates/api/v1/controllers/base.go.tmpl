@@ -16,16 +16,23 @@
 package controllers
 
 import (
-	"{{ .ModuleName }}/config"
-	"{{ .ModuleName }}/services"
+	"{{ .ModuleName }}/handler"
+	"{{ .ModuleName }}/api/v1/services"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func Health(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"env": config.Conf.Environment,
-		"ok":  1,
-		"v":   config.Conf.Version,
-	})
+
+type BaseController struct {
+	Services *services.BaseService
+}
+
+func NewBaseController(bs *services.BaseService) *BaseController {
+	return &BaseController{
+		Services: bs,
+	}
+}
+
+func (base *BaseController) Health(c *fiber.Ctx) error {
+	return handler.Success(c, base.Services.ServerInfo(c))
 }

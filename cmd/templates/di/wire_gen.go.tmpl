@@ -7,15 +7,20 @@
 package di
 
 import (
+	"{{ .ModuleName }}/api/v1/controllers"
 	"{{ .ModuleName }}/api/v1/middleware"
+	"{{ .ModuleName }}/api/v1/services"
 )
 
 // Injectors from wire.go:
 
 func NewAppContainer() (*AppContainer, error) {
-	middlewareMiddleware := &middleware.Middleware{}
+	baseMiddleware := middleware.NewBaseMiddleware()
+	baseService := services.NewBaseService()
+	baseController := controllers.NewBaseController(baseService)
 	appContainer := &AppContainer{
-		AuthMiddleware: middlewareMiddleware,
+		AuthMiddleware: baseMiddleware,
+		BaseController: baseController,
 	}
 	return appContainer, nil
 }
@@ -23,5 +28,6 @@ func NewAppContainer() (*AppContainer, error) {
 // wire.go:
 
 type AppContainer struct {
-	AuthMiddleware *middleware.Middleware
+	AuthMiddleware *middleware.BaseMiddleware
+	BaseController *controllers.BaseController
 }

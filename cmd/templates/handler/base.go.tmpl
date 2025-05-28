@@ -17,7 +17,8 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-
+	
+	"{{ .ModuleName }}/config"
 	"{{ .ModuleName }}/constants"
 	"{{ .ModuleName }}/types"
 	"{{ .ModuleName }}/utils/localized"
@@ -36,10 +37,12 @@ func ErrorHandler(ctx *fiber.Ctx, err error) error {
 // The original error, if present, is included in the response details.s
 func BuildError(ctx *fiber.Ctx, ErrorCode string, code int, originalErr interface{}, rollback bool) error {
 	// rollback transaction
-	if rollback {
-		rollbackCtxTrx(ctx)
-	} else {
-		commitCtxTrx(ctx)
+	if config.Conf.PostgresUser != "" {
+		if rollback {
+			rollbackCtxTrx(ctx)
+		} else {
+			commitCtxTrx(ctx)
+		}
 	}
 
 	if code == 0 {
@@ -66,11 +69,14 @@ func BuildError(ctx *fiber.Ctx, ErrorCode string, code int, originalErr interfac
 // and returns a JSON response with the provided data. If committing the transaction fails,
 // an error is returned.
 func Success(ctx *fiber.Ctx, data interface{}) error {
-	err := commitCtxTrx(ctx)
+	if config.Conf.PostgresUser != "" {
+		err := commitCtxTrx(ctx)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
+
 	return ctx.JSON(types.Response{
 		Ok:      1,
 		Message: localized.Msg(ctx.Locals(constants.LanguageKey).(string), constants.SuccessCode),
