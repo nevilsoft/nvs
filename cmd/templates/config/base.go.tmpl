@@ -79,7 +79,7 @@ func New() (*Config, error) {
 	serviceName := vars.optional("SERVICE_NAME", "go-service")
 	version := vars.optional("VERSION", "1.0.0")
 
-	postgresEnabled := vars.optionalBool("POSTGRES_ENABLED", false)
+	databaseEnabled := vars.optionalBool("DATABASE_ENABLED", false)
 	postgresHost := vars.optional("POSTGRES_HOST", "")
 	postgresPort := vars.optional("POSTGRES_PORT", "5432")
 	postgresUser := vars.optional("POSTGRES_USER", "")
@@ -110,7 +110,7 @@ func New() (*Config, error) {
 		ServiceName: serviceName,
 		Version:     version,
 
-		DatabaseEnabled:  postgresEnabled,
+		DatabaseEnabled:  databaseEnabled,
 		PostgresHost:     postgresHost,
 		PostgresPort:     postgresPort,
 		PostgresUser:     postgresUser,
