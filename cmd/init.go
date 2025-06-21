@@ -129,12 +129,15 @@ func prompt(question, defaultValue string) string {
 	return text
 }
 
-// confirm ยืนยันคำตอบ y/n
+// confirm ยืนยันคำตอบ y/n default y
 func confirm(question string) bool {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("%s (y/n): ", question)
 	text, _ := reader.ReadString('\n')
 	text = strings.ToLower(strings.TrimSpace(text))
+	if text == "" {
+		return true
+	}
 	return text == "y" || text == "yes"
 }
 
