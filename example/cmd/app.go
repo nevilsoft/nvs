@@ -1,0 +1,175 @@
+/*
+ * Created on Tue Mar 04 2025
+ *
+ * © 2025 Nevilsoft Part., Ltd. All Rights Reserved.
+ *
+ * * ข้อมูลลับและสงวนสิทธิ์ *
+ * ไฟล์นี้เป็นทรัพย์สินของ Nevilsoft Part., Ltd. และมีข้อมูลที่เป็นความลับทางธุรกิจ
+ * อนุญาตให้เฉพาะพนักงานที่ได้รับสิทธิ์เข้าถึงเท่านั้น
+ * ห้ามเผยแพร่ คัดลอก ดัดแปลง หรือใช้งานโดยไม่ได้รับอนุญาตจากฝ่ายบริหาร
+ *
+ * การละเมิดข้อตกลงนี้ อาจมีผลให้ถูกลงโทษทางวินัย รวมถึงการดำเนินคดีตามกฎหมาย
+ * ตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560 (มาตรา 7, 9, 10)
+ * และกฎหมายอื่นที่เกี่ยวข้อง
+ */
+
+package cmd
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+
+	"github.com/MarceloPetrucio/go-scalar-api-reference"
+	"github.com/burapha44/example/api/v1/routes"
+	"github.com/burapha44/example/config"
+	"github.com/burapha44/example/constants"
+	"github.com/burapha44/example/handler"
+	"github.com/burapha44/example/session"
+	"github.com/burapha44/example/utils/localized"
+)
+
+// InitApp returns a new Fiber app with CORS middleware and API routes.
+//
+// The returned app has the following configuration:
+//
+//   - JSONEncoder and JSONDecoder are set to the standard library's json.Marshal
+//     and json.Unmarshal functions.
+//   - DisableStartupMessage is set to true to prevent the app from printing a
+//     startup message to the console.
+//
+// The app also has a CORS middleware that allows requests from any origin,
+// with the following configuration:
+//
+// - AllowOrigins is set to "*".
+// - AllowHeaders is set to "Origin, Content-Type, Accept, Authorization".
+// - AllowMethods is set to "GET, POST, PUT, DELETE, PATCH, HEAD".
+//
+// Finally, the app has all routes defined in routes.SetupRoutes set up.
+
+// @title           Docs API
+// @version         1.0
+// @description     Exemple use of scalar beautfull api docs
+// @termsOfService  http://swagger.io/terms/
+
+// @host      http://localhost:3001
+// @BasePath  /api/v1
+
+// @contact.name   Burapha
+// contact.url    https://marcelopetrucio.dev
+// @contact.email  marcelo.petrucio43@gmail.com
+
+// @BasePath  /
+func InitDocsApp() *fiber.App {
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
+
+	app.Get("/reference", func(c *fiber.Ctx) error {
+		htmlContent, err := scalar.ApiReferenceHTML(&scalar.Options{
+			SpecURL: "./docs/swagger.json",
+			CustomOptions: scalar.CustomOptions{
+				PageTitle: " Docs API",
+			},
+			DarkMode:    true,
+			Theme:       scalar.ThemeId(scalar.ThemeBluePlanet),
+			ShowSidebar: true,
+			HideModels:  true,
+		})
+
+		if err != nil {
+			fmt.Printf("%v", err)
+		}
+		c.Set("Content-Type", "text/html")
+		return c.SendString(htmlContent)
+	})
+
+	return app
+}
+
+func InitApp() *fiber.App {
+	app := fiber.New(fiber.Config{
+		JSONEncoder:           json.Marshal,
+		JSONDecoder:           json.Unmarshal,
+		DisableStartupMessage: true,
+		ErrorHandler:          handler.ErrorHandler,
+		ServerHeader:          "Nevilsoft",
+		ProxyHeader:           "X-Forwarded-For",
+		ReadTimeout:           5 * time.Second,
+		WriteTimeout:          10 * time.Second,
+	})
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     config.Conf.AllowOrigins,
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Request-Id, X-CSRF-Token, Referer",
+		AllowMethods:     "GET, POST, PUT, DELETE, PATCH",
+		AllowCredentials: false,
+	}))
+
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		c.Set("X-Content-Type-Options", "nosniff")
+		c.Set("X-Frame-Options", "DENY")
+		c.Set("X-XSS-Protection", "1; mode=block")
+		return c.Next()
+	})
+
+	app.Use(logger.New())
+
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
+
+	app.Use(func(c *fiber.Ctx) error {
+		lang := strings.ToLower(c.Get(fiber.HeaderAcceptLanguage, string(constants.LanguageDefault)))
+		if _, exists := localized.Language[lang]; !exists {
+			lang = string(constants.LanguageDefault)
+		}
+
+		c.Locals(constants.LanguageKey, lang)
+		return c.Next()
+	})
+
+	if config.Conf.RedisHost != "" {
+		sessManager := session.NewSessionManager()
+
+		app.Use(sessManager.Middleware())
+	}
+
+	// app.Use(csrf.New(csrf.Config{
+	// 	ErrorHandler: fiber.ErrorHandler(func(c *fiber.Ctx, err error) error {
+	// 		return H.BuildError(c, C.BadRequestCode, fiber.StatusBadRequest, err.Error(), true)
+	// 	}),
+	// 	KeyLookup:      "cookie:csrf_",
+	// 	CookieDomain:   ".slipsure.me",
+	// 	Expiration:     2 * time.Hour,
+	// 	CookieSecure:   true,
+	// 	CookieHTTPOnly: true,
+	// 	// Storage: redis.New(redis.Config{
+	// 	// 	Host:      config.Conf.RedisHost,
+	// 	// 	Port:      config.Conf.RedisPort,
+	// 	// 	Password:  config.Conf.RedisPassword,
+	// 	// 	Database:  1,
+	// 	// 	Reset:     false,
+	// 	// 	TLSConfig: nil,
+	// 	// }),
+	// 	Session: sessManager.Store,
+	// 	Next: func(c *fiber.Ctx) bool {
+	// 		return strings.HasPrefix(c.Path(), "/api/v1/external")
+	// 	},
+	// }))
+	container := routes.InitDIContainer()
+
+	// mws := container.AuthMiddleware
+	// app.Use(mws.UserAgentFilter())
+
+	routes.SetupRoutes(app, container)
+
+	return app
+}

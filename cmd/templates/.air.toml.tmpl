@@ -1,11 +1,12 @@
 root = "."
 tmp_dir = "build"
 
+
 [build]
   bin = "./build/main"
-  cmd = "go build -o ./build/main ."
+  cmd = "clear && swag init -g *.go && nvs build -o ./build/main"
   delay = 1000
-  exclude_dir = ["assets", "tmp", "vendor", "build", "test", ".vscode", ".github", "README.md"]
+  exclude_dir = ["assets", "tmp", "vendor", "build", "test", ".vscode", ".github", "README.md", "docs"]
   exclude_file = []
   exclude_regex = []
   exclude_unchanged = false

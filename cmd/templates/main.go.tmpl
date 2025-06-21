@@ -19,20 +19,107 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
+	"strconv"
+	"sync"
+	"syscall"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 
-	"{{ .ModuleName }}/cache"
-	"{{ .ModuleName }}/cmd"
-	"{{ .ModuleName }}/config"
-	"{{ .ModuleName }}/db"
-	"{{ .ModuleName }}/utils/localized"
+	"{{ .ModuleName}}/cache"
+	"{{ .ModuleName}}/cmd"
+	"{{ .ModuleName}}/config"
+	"{{ .ModuleName}}/db"
+	"{{ .ModuleName}}/shared"
+	"{{ .ModuleName}}/utils"
+	"{{ .ModuleName}}/utils/localized"
+	"github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin"
 )
 
+var ip = "127.0.0.1"
+var Version string
+
+// Handshake configuration (ต้องเหมือนกับใน plugin)
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "CHECKER_PLUGIN",
+	MagicCookieValue: "checker123",
+}
+
+// Plugin map
+var pluginMap = map[string]plugin.Plugin{
+	"checker": &shared.CheckerPlugin{},
+}
+
+func init() {
+	// ส่ง path ของ main binary ให้ plugin
+	mainPath, _ := os.Executable()
+	os.Setenv("MAIN_BINARY_PATH", mainPath)
+
+	// Load plugin
+	pluginPath := "./plugin/checker" // path ไปยัง plugin binary
+
+	// ตรวจสอบว่า plugin file มีอยู่หรือไม่
+	if _, err := os.Stat(pluginPath); os.IsNotExist(err) {
+		fmt.Println("❌ Plugin not found:", pluginPath)
+		os.Exit(1)
+	}
+
+	// Create plugin client
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: handshakeConfig,
+		Plugins:         pluginMap,
+		Cmd:             exec.Command(pluginPath),
+		Logger: hclog.New(&hclog.LoggerOptions{
+			Level:  hclog.Error,
+			Output: os.Stderr,
+		}),
+	})
+	defer client.Kill()
+
+	// Connect via RPC
+	rpcClient, err := client.Client()
+	if err != nil {
+		fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน1")
+		os.Exit(1)
+	}
+
+	// Get the plugin
+	raw, err := rpcClient.Dispense("checker")
+	if err != nil {
+		fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน2")
+		os.Exit(1)
+	}
+
+	// Cast to Checker interface
+	checker := raw.(shared.Checker)
+	if os.Getenv("ENV") != "dev" {
+		if !checker.Check() {
+			fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน3")
+			os.Exit(1)
+		}
+	}
+
+	fmt.Println("✅ Valid hash - โปรแกรมพร้อมใช้งาน")
+}
+
 func main() {
-	if godotenv.Load("./.env.local") != nil {
+	env := os.Getenv("ENV")
+	fileEnv := "./.env.local"
+
+	if env == "" || env == "dev" {
+		env = "dev"
+		fileEnv = "./.env.local"
+	}
+
+	if env == "prod" {
+		fileEnv = "./.env"
+	}
+
+	if godotenv.Load(fileEnv) != nil {
 		log.Fatal("Error loading .env file")
 	}
 	confVars, configErr := config.New()
@@ -49,7 +136,9 @@ func main() {
 		dbErr := db.Init()
 
 		if dbErr != nil {
-			log.Fatal(dbErr)
+			// log.Fatal(dbErr)
+			fmt.Println("❌ ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้")
+			os.Exit(1)
 		}
 
 		defer db.Close()
@@ -66,12 +155,64 @@ func main() {
 	}
 
 	app := cmd.InitApp()
+	docsApp := cmd.InitDocsApp()
 
-	if confVars.Environment == "development" {
-		startServer(app, confVars.Port)
-	} else {
-		startServerWithGracefulShutdown(app, confVars.Port)
-	}
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Graceful shutdown signal handler
+	shutdownChan := make(chan os.Signal, 1)
+	signal.Notify(shutdownChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		defer wg.Done()
+		if confVars.Environment == "dev" {
+			startServer(app, confVars.Port)
+		} else {
+			startServer(app, confVars.Port)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		docsPort := "8081"
+		if err := docsApp.Listen(":" + docsPort); err != nil {
+			log.Printf("Docs server stopped: %v", err)
+		}
+	}()
+
+	// Wait for OS signal to gracefully shutdown both servers
+	go func() {
+		<-shutdownChan
+		fmt.Println("\n🔻 Shutting down servers...")
+
+		if err := app.Shutdown(); err != nil {
+			log.Printf("Failed to shutdown app server: %v", err)
+		}
+
+		if err := docsApp.Shutdown(); err != nil {
+			log.Printf("Failed to shutdown docs server: %v", err)
+		}
+	}()
+
+	utils.ShowBanner(
+		color.RGB(102, 178, 255).Sprintf("\033[1mNVS Structure + Fiber v2\033[0m"),
+		color.RGB(102, 178, 255).Sprintf("© 2025 Nevilsoft Part., Ltd."),
+		"",
+		formatLine(color.BlackString("🔗 API Server Info: ")+color.CyanString("\033[4mhttp://"+ip+confVars.Port+"/api/v1/server/info\033[0m"), "start"),
+		formatLine(color.BlackString("🔗 API Docs: ")+color.CyanString("\033[4mhttp://"+ip+":8081"+"/reference\033[0m"), "start"),
+		"",
+		formatLine(color.BlackString("Set Config In: ")+color.CyanString(".env.local"), "start"),
+		formatLine(color.BlackString("Database Enabled: ")+color.CyanString(strconv.FormatBool(config.Conf.DatabaseEnabled)), "start"),
+		formatLine(color.BlackString("Redis Enabled: ")+color.CyanString(strconv.FormatBool(config.Conf.RedisHost != "")), "start"),
+		formatLine(color.BlackString("Environment: ")+color.CyanString(config.Conf.Environment), "start"),
+		formatLine(color.BlackString("Origin: ")+color.CyanString(config.Conf.AllowOrigins), "start"),
+		formatLine(color.BlackString("Version: ")+color.CyanString(Version), "start"),
+	)
+	color.Cyan("\n🚀 Server is running... Press Ctrl+C to stop")
+
+	wg.Wait()
+	fmt.Println("✅ Servers shutdown gracefully")
 }
 
 // startServerWithGracefulShutdown starts a Fiber server and listens for OS interrupt signals to gracefully
@@ -79,6 +220,7 @@ func main() {
 // a server shutdown when a signal is received. The function logs the startup and shutdown processes, and
 // ensures that all idle connections are closed properly upon shutdown.
 func startServerWithGracefulShutdown(a *fiber.App, fiberConnURL string) {
+
 	// Create channel for idle connections.
 	idleConnsClosed := make(chan struct{})
 
@@ -90,14 +232,11 @@ func startServerWithGracefulShutdown(a *fiber.App, fiberConnURL string) {
 		// Received an interrupt signal, shutdown.
 		if err := a.Shutdown(); err != nil {
 			// Error from closing listeners, or context timeout:
-			log.Printf("Oops... Server is not shutting down! Reason: %v", err)
+			fmt.Printf("Oops... Server is not shutting down! Reason: %v", err)
 		}
 
 		close(idleConnsClosed)
 	}()
-
-	// Log server startup message.
-	log.Println("🚀 Server is starting")
 
 	// Run server.
 	if err := a.Listen(fiberConnURL); err != nil {
@@ -112,10 +251,11 @@ func startServerWithGracefulShutdown(a *fiber.App, fiberConnURL string) {
 // If the server fails to start, it logs an error message with the reason for failure.
 // The server can be stopped by pressing Ctrl+C.
 func startServer(a *fiber.App, fiberConnURL string) {
-	log.Println("🚀 Server is starting: ", fiberConnURL)
-	fmt.Println("Server is running... Press Ctrl+C to stop")
-
 	if err := a.Listen(fiberConnURL); err != nil {
 		log.Printf("Oops... Server is not running! Reason: %v", err)
 	}
+}
+
+func formatLine(text, align string) string {
+	return fmt.Sprintf("%s|%s", align, text)
 }

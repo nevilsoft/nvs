@@ -1,0 +1,94 @@
+/*
+ * Created on Tue Mar 04 2025
+ *
+ * © 2025 Nevilsoft Part., Ltd. All Rights Reserved.
+ *
+ * * ข้อมูลลับและสงวนสิทธิ์ *
+ * ไฟล์นี้เป็นทรัพย์สินของ Nevilsoft Part., Ltd. และมีข้อมูลที่เป็นความลับทางธุรกิจ
+ * อนุญาตให้เฉพาะพนักงานที่ได้รับสิทธิ์เข้าถึงเท่านั้น
+ * ห้ามเผยแพร่ คัดลอก ดัดแปลง หรือใช้งานโดยไม่ได้รับอนุญาตจากฝ่ายบริหาร
+ *
+ * การละเมิดข้อตกลงนี้ อาจมีผลให้ถูกลงโทษทางวินัย รวมถึงการดำเนินคดีตามกฎหมาย
+ * ตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560 (มาตรา 7, 9, 10)
+ * และกฎหมายอื่นที่เกี่ยวข้อง
+ */
+
+package localized
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/fatih/color"
+)
+
+var Language = make(map[string]map[string]string)
+var DefaultLanguage = "en"
+var FallbackLanguages = []string{"en"} // เพิ่มการตั้งค่าภาษา fallback ตามลำดับที่ต้องการ
+
+// LoadLanguage reads JSON files from the specified directory and loads them
+// into a global language map. It also allows loading additional fallback languages.
+func LoadLanguage(dir string) error {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		if ext := file.Name()[len(file.Name())-5:]; ext == ".json" {
+			lang := file.Name()[:len(file.Name())-5]
+			content, err := os.ReadFile(fmt.Sprintf("%s/%s", dir, file.Name()))
+			if err != nil {
+				return fmt.Errorf("error reading file %s: %w", file.Name(), err)
+			}
+
+			var messages map[string]string
+			if err = json.Unmarshal(content, &messages); err != nil {
+				return fmt.Errorf("error un marshalling file %s: %w", file.Name(), err)
+			}
+			Language[lang] = messages
+		}
+	}
+	color.RGB(102, 178, 255).Println("🌎 Loading languages successfully")
+
+	return nil
+}
+
+// LocalizedMsg retrieves the localized message for a given language and message key.
+// It looks up the message key in the language map under the given language code.
+// It also allows falling back to a sequence of other languages before using the default.
+func Msg(lang string, msg string) string {
+	// ตรวจสอบภาษาที่ตรงกับที่เลือก
+	if localizedMsg, exists := Language[lang][msg]; exists {
+		return localizedMsg
+	}
+
+	// ลอง fallback ไปที่ภาษาอื่น ๆ ตามลำดับ
+	for _, fallbackLang := range FallbackLanguages {
+		if localizedMsg, exists := Language[fallbackLang][msg]; exists {
+			return localizedMsg
+		}
+	}
+
+	// ถ้าไม่เจอ, fallback ไปที่ภาษาเริ่มต้น
+	if localizedMsg, exists := Language[DefaultLanguage][msg]; exists {
+		return localizedMsg
+	}
+
+	// ถ้าไม่พบ, คืนค่าคีย์ข้อความตามเดิม
+	return string(msg)
+}
+
+// SetFallbackLanguages allows setting custom fallback languages.
+func SetFallbackLanguages(langs []string) {
+	FallbackLanguages = langs
+}
+
+// SetDefaultLanguage allows setting a custom default language.
+func SetDefaultLanguage(lang string) {
+	DefaultLanguage = lang
+}

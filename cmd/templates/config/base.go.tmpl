@@ -75,7 +75,7 @@ func New() (*Config, error) {
 	vars := &confVars{}
 
 	port := vars.mandatoryInt("PORT")
-	environment := vars.mandatory("ENVIRONMENT")
+	environment := vars.mandatory("ENV")
 	serviceName := vars.optional("SERVICE_NAME", "go-service")
 	version := vars.optional("VERSION", "1.0.0")
 

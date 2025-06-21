@@ -1,0 +1,62 @@
+/*
+ * Created on Tue Mar 04 2025
+ *
+ * © 2025 Nevilsoft Part., Ltd. All Rights Reserved.
+ *
+ * * ข้อมูลลับและสงวนสิทธิ์ *
+ * ไฟล์นี้เป็นทรัพย์สินของ Nevilsoft Part., Ltd. และมีข้อมูลที่เป็นความลับทางธุรกิจ
+ * อนุญาตให้เฉพาะพนักงานที่ได้รับสิทธิ์เข้าถึงเท่านั้น
+ * ห้ามเผยแพร่ คัดลอก ดัดแปลง หรือใช้งานโดยไม่ได้รับอนุญาตจากฝ่ายบริหาร
+ *
+ * การละเมิดข้อตกลงนี้ อาจมีผลให้ถูกลงโทษทางวินัย รวมถึงการดำเนินคดีตามกฎหมาย
+ * ตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560 (มาตรา 7, 9, 10)
+ * และกฎหมายอื่นที่เกี่ยวข้อง
+ */
+
+package routes
+
+import (
+	"log"
+
+	"github.com/burapha44/example/constants"
+	"github.com/burapha44/example/di"
+	"github.com/burapha44/example/handler"
+	"github.com/fatih/color"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func InitDIContainer() *di.AppContainer {
+	container, err := di.NewAppContainer()
+	if err != nil {
+		log.Panicf("❌ Failed to initialize DI Container: %v", err)
+	}
+	color.RGB(102, 178, 255).Println("✅ DI Container initialized successfully")
+	return container
+}
+
+func SetupRoutes(app *fiber.App, container *di.AppContainer) {
+	v1API := app.Group("/api/v1")
+
+	RegisterRoutes(v1API, container)
+	notFoundRoute(app)
+}
+
+func RegisterRoutes(api fiber.Router, container *di.AppContainer) {
+	mws := container.AuthMiddleware
+	baseC := container.BaseController
+
+	api.Get("/server/info", mws.RateLimit(constants.Tier3, 0), baseC.Health)
+
+}
+
+func notFoundRoute(a *fiber.App) {
+	// Register new special route.
+	a.Use(
+		// Anonymous function.
+		func(c *fiber.Ctx) error {
+			// Return HTTP 404 status and JSON response.
+			return handler.BuildError(c, constants.EndpointNotFoundCode, fiber.StatusNotFound, nil, true)
+		},
+	)
+}

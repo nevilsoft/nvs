@@ -1,0 +1,80 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/api/v1/server/info": {
+            "get": {
+                "description": "Get server info and dependencies status and uptime of server and more",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Base"
+                ],
+                "summary": "Get Server Info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.ServerInfoResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "services.DependencyStatus": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "response_time_ms": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.ServerInfoResponse": {
+            "type": "object",
+            "properties": {
+                "dependencies": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/services.DependencyStatus"
+                    }
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "hostname": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "service_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "uptime": {
+                    "description": "Or int for seconds",
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

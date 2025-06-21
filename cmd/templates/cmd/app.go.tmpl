@@ -17,13 +17,16 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 
+	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"{{ .ModuleName }}/api/v1/routes"
 	"{{ .ModuleName }}/config"
 	"{{ .ModuleName }}/constants"
@@ -49,6 +52,47 @@ import (
 // - AllowMethods is set to "GET, POST, PUT, DELETE, PATCH, HEAD".
 //
 // Finally, the app has all routes defined in routes.SetupRoutes set up.
+
+// @title           Docs API
+// @version         1.0
+// @description     Exemple use of scalar beautfull api docs
+// @termsOfService  http://swagger.io/terms/
+
+// @host      http://localhost:3001
+// @BasePath  /api/v1
+
+// @contact.name   Burapha
+// contact.url    https://marcelopetrucio.dev
+// @contact.email  marcelo.petrucio43@gmail.com
+
+// @BasePath  /
+func InitDocsApp() *fiber.App {
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
+
+	app.Get("/reference", func(c *fiber.Ctx) error {
+		htmlContent, err := scalar.ApiReferenceHTML(&scalar.Options{
+			SpecURL: "./docs/swagger.json",
+			CustomOptions: scalar.CustomOptions{
+				PageTitle: " Docs API",
+			},
+			DarkMode:    true,
+			Theme:       scalar.ThemeId(scalar.ThemeBluePlanet),
+			ShowSidebar: true,
+			HideModels:  true,
+		})
+
+		if err != nil {
+			fmt.Printf("%v", err)
+		}
+		c.Set("Content-Type", "text/html")
+		return c.SendString(htmlContent)
+	})
+
+	return app
+}
+
 func InitApp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		JSONEncoder:           json.Marshal,
@@ -76,6 +120,8 @@ func InitApp() *fiber.App {
 		return c.Next()
 	})
 
+	app.Use(logger.New())
+
 	app.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed,
 	}))
@@ -89,8 +135,8 @@ func InitApp() *fiber.App {
 		c.Locals(constants.LanguageKey, lang)
 		return c.Next()
 	})
-	
-	if config.Conf.RedisHost != "" {	
+
+	if config.Conf.RedisHost != "" {
 		sessManager := session.NewSessionManager()
 
 		app.Use(sessManager.Middleware())

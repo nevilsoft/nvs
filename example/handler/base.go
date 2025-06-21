@@ -1,0 +1,85 @@
+/*
+ * Created on Tue Mar 04 2025
+ *
+ * © 2025 Nevilsoft Part., Ltd. All Rights Reserved.
+ *
+ * * ข้อมูลลับและสงวนสิทธิ์ *
+ * ไฟล์นี้เป็นทรัพย์สินของ Nevilsoft Part., Ltd. และมีข้อมูลที่เป็นความลับทางธุรกิจ
+ * อนุญาตให้เฉพาะพนักงานที่ได้รับสิทธิ์เข้าถึงเท่านั้น
+ * ห้ามเผยแพร่ คัดลอก ดัดแปลง หรือใช้งานโดยไม่ได้รับอนุญาตจากฝ่ายบริหาร
+ *
+ * การละเมิดข้อตกลงนี้ อาจมีผลให้ถูกลงโทษทางวินัย รวมถึงการดำเนินคดีตามกฎหมาย
+ * ตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560 (มาตรา 7, 9, 10)
+ * และกฎหมายอื่นที่เกี่ยวข้อง
+ */
+
+package handler
+
+import (
+	"github.com/gofiber/fiber/v2"
+	
+	"github.com/burapha44/example/config"
+	"github.com/burapha44/example/constants"
+	"github.com/burapha44/example/types"
+	"github.com/burapha44/example/utils/localized"
+)
+
+// ErrorHandler is a convenience function that can be used as a custom error handler for
+// Fiber. It calls BuildError with a default error message and status code of 500 (Internal
+// Server Error). It also rolls back the active transaction if present.
+func ErrorHandler(ctx *fiber.Ctx, err error) error {
+	return BuildError(ctx, constants.InternalErrorCode, fiber.StatusInternalServerError, err, true)
+}
+
+// BuildError constructs a JSON response with the given error message and status code.
+// It also rolls back any active database transaction associated with the context.
+// If no status code is provided, it defaults to 500 (Internal Server Error).
+// The original error, if present, is included in the response details.s
+func BuildError(ctx *fiber.Ctx, ErrorCode string, code int, originalErr interface{}, rollback bool) error {
+	// rollback transaction
+	if config.Conf.PostgresUser != "" {
+		if rollback {
+			rollbackCtxTrx(ctx)
+		} else {
+			commitCtxTrx(ctx)
+		}
+	}
+
+	if code == 0 {
+		code = fiber.StatusInternalServerError
+	}
+
+	var detail interface{}
+
+	if originalErr != nil {
+		detail = originalErr
+	}
+	lang, ok := ctx.Locals(constants.LanguageKey).(string)
+	if !ok {
+		lang = "en"
+	}
+	return ctx.Status(code).JSON(types.BuildErrorResponse{
+		Ok:  0,
+		Msg: localized.Msg(lang, ErrorCode),
+		Det: detail,
+	})
+}
+
+// Success commits the active database transaction associated with the given Fiber context
+// and returns a JSON response with the provided data. If committing the transaction fails,
+// an error is returned.
+func Success(ctx *fiber.Ctx, data interface{}) error {
+	if config.Conf.PostgresUser != "" {
+		err := commitCtxTrx(ctx)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return ctx.JSON(types.Response{
+		Ok:      1,
+		Message: localized.Msg(ctx.Locals(constants.LanguageKey).(string), constants.SuccessCode),
+		Data:    data,
+	})
+}

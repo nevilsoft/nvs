@@ -18,9 +18,9 @@ package localized
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
-	"strings"
+
+	"github.com/fatih/color"
 )
 
 var Language = make(map[string]map[string]string)
@@ -31,7 +31,6 @@ var FallbackLanguages = []string{"en"} // เพิ่มการตั้ง�
 // into a global language map. It also allows loading additional fallback languages.
 func LoadLanguage(dir string) error {
 	files, err := os.ReadDir(dir)
-	var langs []string
 	if err != nil {
 		return err
 	}
@@ -42,7 +41,6 @@ func LoadLanguage(dir string) error {
 
 		if ext := file.Name()[len(file.Name())-5:]; ext == ".json" {
 			lang := file.Name()[:len(file.Name())-5]
-			langs = append(langs, lang)
 			content, err := os.ReadFile(fmt.Sprintf("%s/%s", dir, file.Name()))
 			if err != nil {
 				return fmt.Errorf("error reading file %s: %w", file.Name(), err)
@@ -55,7 +53,7 @@ func LoadLanguage(dir string) error {
 			Language[lang] = messages
 		}
 	}
-	log.Println("🌎 Loading languages: " + strings.Join(langs, ", ") + " successfully")
+	color.RGB(102, 178, 255).Println("🌎 Loading languages successfully")
 
 	return nil
 }

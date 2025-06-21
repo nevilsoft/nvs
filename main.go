@@ -15,7 +15,7 @@
 
 package main
 
-import "github.com/nevilsoft/nvscli/cmd"
+import "github.com/nevilsoft/nvs/cmd"
 
 func main() {
 	cmd.Execute()

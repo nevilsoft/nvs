@@ -1,0 +1,82 @@
+/*
+ * Created on Tue Mar 04 2025
+ *
+ * © 2025 Nevilsoft Part., Ltd. All Rights Reserved.
+ *
+ * * ข้อมูลลับและสงวนสิทธิ์ *
+ * ไฟล์นี้เป็นทรัพย์สินของ Nevilsoft Part., Ltd. และมีข้อมูลที่เป็นความลับทางธุรกิจ
+ * อนุญาตให้เฉพาะพนักงานที่ได้รับสิทธิ์เข้าถึงเท่านั้น
+ * ห้ามเผยแพร่ คัดลอก ดัดแปลง หรือใช้งานโดยไม่ได้รับอนุญาตจากฝ่ายบริหาร
+ *
+ * การละเมิดข้อตกลงนี้ อาจมีผลให้ถูกลงโทษทางวินัย รวมถึงการดำเนินคดีตามกฎหมาย
+ * ตามพระราชบัญญัติว่าด้วยการกระทำความผิดเกี่ยวกับคอมพิวเตอร์ พ.ศ. 2560 (มาตรา 7, 9, 10)
+ * และกฎหมายอื่นที่เกี่ยวข้อง
+ */
+
+package db
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"github.com/burapha44/example/config"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var PostgresConn *pgxpool.Pool
+
+// GetPostgresURL returns the connection string for the PostgreSQL database.
+func GetPostgresURL() string {
+	dbHost := config.Conf.PostgresHost
+	dbPort := config.Conf.PostgresPort
+	dbUser := config.Conf.PostgresUser
+	dbPass := config.Conf.PostgresPassword
+	dbName := config.Conf.PostgresDB
+
+	if config.Conf.PostgresSSLMode == "disable" {
+		return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			dbHost, dbPort, dbUser, dbPass, dbName)
+	} else {
+		return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s sslrootcert=%s",
+			dbHost, dbPort, dbUser, dbPass, dbName, config.Conf.PostgresSSLMode, config.Conf.PostgresRootCertLoc)
+	}
+}
+
+// Init initializes the database connection using pgx.
+func Init() error {
+	var err error
+	PostgresConn, err = pgxpool.New(context.Background(), GetPostgresURL())
+	if err != nil {
+		return fmt.Errorf("error opening database connection: %w", err)
+	}
+
+	// Ping to check the connection
+	if err := PostgresConn.Ping(context.Background()); err != nil {
+		return fmt.Errorf("error pinging database: %w", err)
+	}
+
+	// Set connection pool options
+	PostgresConn.Config().MaxConns = int32(config.Conf.PostgresMaxOpenConns)
+	PostgresConn.Config().MaxConnIdleTime = time.Duration(config.Conf.PostgresMaxIdleConns)
+
+	log.Println("🎊 Connected to the database successfully")
+	return nil
+}
+
+// PGTransaction begins a new transaction with pgx.
+func PGTransaction(ctx context.Context) (pgx.Tx, error) {
+	tx, err := PostgresConn.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
+}
+
+// Close closes the database connection.
+func Close() {
+	PostgresConn.Close()
+}

@@ -33,6 +33,13 @@ func NewBaseController(bs *services.BaseService) *BaseController {
 	}
 }
 
+// Exemple Doc
+// @Summary      Get Server Info
+// @Description  Get server info and dependencies status and uptime of server and more
+// @Tags         Base
+// @Produce      json
+// @Success      200				 {object}  services.ServerInfoResponse
+// @Router       /api/v1/server/info [get]
 func (base *BaseController) Health(c *fiber.Ctx) error {
 	return handler.Success(c, base.Services.ServerInfo(c))
 }
