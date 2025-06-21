@@ -1,188 +1,282 @@
 # NVS CLI
 
-A powerful command-line interface tool built with Go, featuring dependency injection and modern development practices.
+A powerful command-line interface tool for creating and managing Go projects with modern development practices, built-in obfuscation, and comprehensive project scaffolding.
 
 ## 🚀 Features
 
-- **Dependency Injection**: Built with Google Wire for clean architecture
-- **Hot Reload**: Development with Air for automatic rebuilds
-- **Modular Design**: Clean separation of concerns with controllers, services, and middleware
-- **Template System**: Dynamic code generation with Go templates
+- **Project Scaffolding**: Interactive project initialization with template system
+- **Code Obfuscation**: Built-in Garble integration for secure builds
+- **Development Tools**: Hot reload with Air, automatic dependency management
+- **Multi-platform Support**: Cross-platform builds for various architectures
+- **Template System**: Embedded templates with dynamic rendering
+- **Security Features**: SHA256 verification and secure execution
+- **Interactive CLI**: User-friendly prompts and confirmations
 
 ## 📋 Prerequisites
 
-- Go 1.21 or higher
-- Air (for development hot reload)
-
-## ��️ Installation
-
-### Install Air (for development)
-```bash
-go install github.com/cosmtrek/air@latest
-```
-
-### Clone the repository
-```bash
-git clone <repository-url>
-cd nvs-cli
-```
+- Go 1.24.0 or higher
+- Git (for user configuration)
 
 ## 🏃‍♂️ Quick Start
 
-### Development Mode
+### Installation
+
 ```bash
-# Start with hot reload
-air
+go install https://github.com/nevilsoft/nvscli@latest
 ```
 
-### Production Build
-```bash
-# Build the application
-go build -o ./build/main .
-
-# Run the built binary
-./build/main
-```
-
-## 📖 Usage
-
-### Basic Commands
+### Basic Usage
 
 ```bash
-# Show help information
+# Show help
 nvs --help
-nvs -h
 
-# Show version
-nvs --version
-nvs -v
+# Initialize a new project
+nvs init
 
-# Show available commands
-nvs list
+# Run in development mode
+nvs dev
+
+# Build with obfuscation
+nvs build
+
+# Start the application
+nvs start main
 ```
 
-### Project Management
+## 📖 Commands
+
+### Project Initialization
 
 ```bash
-# Initialize a new project
-nvs init my-project
+# Initialize a new project with interactive prompts
+nvs init
 
-# Create a new module
-nvs create module user-service
-
-# Generate API endpoints
-nvs generate api user
-
-# Create database migration
-nvs migrate create add_users_table
+# Initialize with custom module name
+nvs init --repo github.com/username/project-name
 ```
 
-### Development Commands
+**Features:**
+- Interactive project name input with defaults
+- Automatic Git user detection
+- Module name generation
+- Template-based project structure
+- Confirmation prompts
+
+### Development Mode
 
 ```bash
 # Start development server with hot reload
 nvs dev
+```
 
-# Run tests
-nvs test
+**Features:**
+- Automatic Air installation
+- Automatic Swag installation for API docs
+- Hot reload with file watching
+- Development environment setup
 
-# Run tests with coverage
-nvs test --coverage
+### Build System
 
-# Build for production
+```bash
+# Build with default settings
 nvs build
 
+# Build with custom output name
+nvs build -o myapp
+
 # Build for specific platform
-nvs build --os=linux --arch=amd64
+nvs build -t linux/amd64
+
+# Build with version
+nvs build -v 1.0.0
 ```
 
-### Database Operations
+**Features:**
+- Automatic Garble installation
+- Code obfuscation for security
+- Cross-platform builds
+- Version embedding
+- Build number generation
+
+### Application Start
 
 ```bash
-# Run database migrations
-nvs migrate up
+# Start in production mode
+nvs start main
 
-# Rollback last migration
-nvs migrate down
-
-# Show migration status
-nvs migrate status
-
-# Seed database
-nvs seed run
+# Start in development mode
+nvs start main -e dev
 ```
 
-### Code Generation
+**Features:**
+- SHA256 hash verification
+- Environment configuration
+- Secure execution
+- Runner ID generation
+
+## 🏗️ Project Structure
+
+```
+example/
+├── main.go                    # Main application entry point
+├── go.mod                     # Go module definition
+├── .air.toml                  # Air hot reload configuration
+├── sqlc.yaml                  # SQLC database code generation config
+├── api/                           # API layer templates
+│   └── v1/
+│       ├── controllers/           # HTTP controllers
+│       ├── middleware/            # HTTP middleware
+│       ├── routes/                # Route definitions
+│       └── services/              # Business logic services
+├── cmd/                           # Command handlers
+├── config/                        # Configuration management
+│   └── base.go                    # Main configuration struct
+├── constants/                     # Application constants
+├── db/                            # Database layer
+├── cache/                         # Caching layer
+├── di/                            # Dependency injection
+│   ├── wire.go                    # Wire DI configuration
+│   └── wire_gen.go                # Generated Wire code
+├── handler/                       # HTTP handlers
+├── lang/                          # Internationalization
+├── migrations/                    # Database migrations
+├── plugin/                        # Plugin system
+├── session/                       # Session management
+├── shared/                        # Shared utilities
+├── types/                         # Type definitions
+└── utils/                         # Utility functions
+```
+
+## ⚙️ Configuration
+
+### Environment Variables
 
 ```bash
-# Generate new controller
-nvs generate controller UserController
+# Development environment
+ENV=dev
 
-# Generate new service
-nvs generate service UserService
+# Production environment  
+ENV=prod
 
-# Generate new model
-nvs generate model User
-
-# Generate CRUD operations
-nvs generate crud User
+# Runner ID (auto-generated)
+RUNNER_ID=<sha256-hash>
 ```
 
-### Configuration
+### Build Configuration
+
+The build system supports various flags:
+
+- `-o, --output`: Output binary name
+- `-t, --target`: Target platform (e.g., linux/amd64, windows/amd64, darwin/arm64)
+- `-v, --version`: Build version
+
+### Development Tools
+
+**Air Configuration** (`.air.toml`):
+- Hot reload for Go files
+- Template file watching
+- Build directory management
+- Excluded directories
+
+**Garble Integration**:
+- Automatic installation
+- Code obfuscation
+- Cross-platform builds
+- Version embedding
+
+## 🔧 Development
+
+### Adding New Commands
+
+1. Create a new command file in `cmd/`
+2. Define the command structure using Cobra
+3. Add to the root command in `cmd/root.go`
+4. Update this README with new command documentation
+
+### Template System
+
+Templates are embedded using Go's `embed` directive:
+
+```go
+//go:embed templates/*
+var templatesFS embed.FS
+```
+
+**Template Variables:**
+- `{{.ProjectName}}`: Project name
+- `{{.ModuleName}}`: Go module name
+
+### Build Process
+
+1. **Dependency Check**: Verify required tools (Garble, Air, Swag)
+2. **Auto-installation**: Install missing dependencies
+3. **Template Rendering**: Process embedded templates
+4. **Code Generation**: Generate project structure
+5. **Build Execution**: Run build commands
+
+## 🛡️ Security Features
+
+### Code Obfuscation
+
+- **Garble Integration**: Automatic code obfuscation
+- **Cross-platform**: Secure builds for multiple architectures
+- **Version Embedding**: Build version and runner ID injection
+
+### Execution Verification
+
+- **SHA256 Hashing**: File integrity verification
+- **Runner ID**: Unique execution identifier
+- **Environment Isolation**: Separate dev/prod environments
+
+## 📦 Dependencies
+
+### Core Dependencies
+
+- `github.com/spf13/cobra`: CLI framework
+- `github.com/inconshreveable/mousetrap`: Windows compatibility
+- `github.com/spf13/pflag`: Flag parsing
+
+### Development Tools
+
+- `github.com/cosmtrek/air`: Hot reload
+- `github.com/swaggo/swag/cmd/swag`: API documentation
+- `mvdan.cc/garble`: Code obfuscation
+
+## 🚀 Example Workflow
 
 ```bash
-# Show current configuration
-nvs config show
+# 1. Initialize new project
+nvs init
+# Follow interactive prompts
 
-# Set configuration value
-nvs config set database.host localhost
+# 2. Navigate to project directory
+cd my-project
 
-# Get configuration value
-nvs config get database.host
+# 3. Start development
+nvs dev
+# Server starts with hot reload
 
-# Edit configuration file
-nvs config edit
+# 4. Build for production
+nvs build -v 1.0.0 -t linux/amd64
+
+# 5. Start production server
+nvs start main
 ```
 
-### Utility Commands
+## 🤝 Contributing
 
-```bash
-# Format code
-nvs fmt
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-# Lint code
-nvs lint
+## 📝 License
 
-# Clean build artifacts
-nvs clean
+© 2025 Nevilsoft Part., Ltd. All Rights Reserved.
 
-# Install dependencies
-nvs deps install
-
-# Update dependencies
-nvs deps update
-```
-
-### Advanced Usage
-
-```bash
-# Run with custom configuration
-nvs --config=./custom-config.yaml
-
-# Enable debug mode
-nvs --debug
-
-# Set log level
-nvs --log-level=debug
-
-# Run in background
-nvs daemon start
-
-# Stop background process
-nvs daemon stop
-```
-
-## 📁 Project Structure
+This project contains confidential and proprietary information. Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 ## 📞 Support
 
@@ -190,4 +284,4 @@ For support and questions, please contact the development team at Nevilsoft Part
 
 ---
 
-**Note**: This project contains confidential business information and is restricted to authorized personnel only. Violation of these terms may result in disciplinary action and legal proceedings under the Computer Crime Act B.E. 2560 (Sections 7, 9, 10) and other applicable laws.
+**Note**: This project contains confidential business information and is restricted to authorized personnel only. Violation of these terms may result in disciplinary action and legal proceedings under the Computer Crime Act B.E. 2560 (Sections 7, 9, 10) and other applicable laws. 

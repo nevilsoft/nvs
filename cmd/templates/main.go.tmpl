@@ -83,14 +83,14 @@ func init() {
 	// Connect via RPC
 	rpcClient, err := client.Client()
 	if err != nil {
-		fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน1")
+		fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน")
 		os.Exit(1)
 	}
 
 	// Get the plugin
 	raw, err := rpcClient.Dispense("checker")
 	if err != nil {
-		fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน2")
+		fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน")
 		os.Exit(1)
 	}
 
@@ -98,7 +98,7 @@ func init() {
 	checker := raw.(shared.Checker)
 	if os.Getenv("ENV") != "dev" {
 		if !checker.Check() {
-			fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน3")
+			fmt.Println("❌ ไม่สามารถรันโปรแกรมได้ กรุณาติดต่อทีมงาน")
 			os.Exit(1)
 		}
 	}
