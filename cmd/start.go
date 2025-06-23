@@ -19,7 +19,7 @@ var startCmd = &cobra.Command{
 		input := name
 		hash, err := calculateSHA256(input)
 		if err != nil {
-			fmt.Println("❌ ไม่สามารถคำนวณ hash ได้:", err)
+			fmt.Println("❌ Unable to compute hash:", err)
 			return
 		}
 		env := cmd.Flag("env").Value.String()
@@ -34,7 +34,7 @@ var startCmd = &cobra.Command{
 		cmdRun.Stdout = os.Stdout
 		cmdRun.Stderr = os.Stderr
 		if err := cmdRun.Run(); err != nil {
-			fmt.Println("❌ ไม่สามารถรัน main ได้:", err)
+			fmt.Println("❌ Unable to run main:", err)
 		}
 	},
 }

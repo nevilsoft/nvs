@@ -34,7 +34,7 @@ var templatesFS embed.FS
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "สร้างโครงสร้างโปรเจกต์ Golang",
+	Short: "Create a new Golang project structure",
 	Run: func(cmd *cobra.Command, args []string) {
 		wd, _ := os.Getwd()
 		repo, _ := cmd.Flags().GetString("repo")
@@ -45,15 +45,15 @@ var initCmd = &cobra.Command{
 		// ตรวจสอบ Git user.name
 		gitUser, err := getGitUserName()
 		if err != nil {
-			fmt.Println("⚠️ ไม่พบ Git user.name:", err)
-			fmt.Println("👉 กรุณาตั้งค่า Git user.name ก่อนใช้งาน")
+			fmt.Println("⚠️ Git user.name not found:", err)
+			fmt.Println("👉 Please set Git user.name before using")
 			return
 		}
 
 		// กำหนดโฟลเดอร์เป้าหมาย
 		targetDir, err := determineTargetDirectory(projectName, wd)
 		if err != nil {
-			fmt.Println("❌ ไม่สามารถสร้างโฟลเดอร์:", err)
+			fmt.Println("❌ Unable to create directory:", err)
 			return
 		}
 
@@ -62,7 +62,7 @@ var initCmd = &cobra.Command{
 			repo = prompt("🧱 Go module name", fmt.Sprintf("github.com/%s/%s", gitUser, projectName))
 		}
 
-		fmt.Printf("🔧 กำลังสร้างโปรเจกต์ %s (module: %s)...\n", projectName, repo)
+		fmt.Printf("🔧 Creating project %s (module: %s)...\n", projectName, repo)
 
 		// คัดลอกไฟล์เทมเพลต
 		err = copyEmbeddedTemplates("templates", targetDir, map[string]string{
@@ -70,12 +70,12 @@ var initCmd = &cobra.Command{
 			"ModuleName":  repo,
 		})
 		if err != nil {
-			fmt.Println("❌ พบข้อผิดพลาด:", err)
+			fmt.Println("❌ Error:", err)
 			return
 		}
 
-		fmt.Println("✅ โปรเจกต์สร้างเสร็จแล้ว!")
-		fmt.Println("📂 หลังจากอยู่ในโฟลเดอร์โปรเจกต์แล้ว ให้รันคำสั่งต่อไปนี้:")
+		fmt.Println("✅ Project created successfully!")
+		fmt.Println("📂 After entering the project directory, run the following commands:")
 		fmt.Println("  1. go mod tidy")
 		fmt.Println("  2. nvs dev")
 		fmt.Println("  3. nvs build")
@@ -105,7 +105,7 @@ func determineTargetDirectory(projectName, currentDir string) (string, error) {
 		return ".", nil
 	}
 
-	confirmName := confirm(fmt.Sprintf("❓ ใช้ชื่อ \"%s\" สร้างโปรเจกต์นี้ใช่ไหม?", projectName))
+	confirmName := confirm(fmt.Sprintf("❓ Use \"%s\" to create this project?", projectName))
 	if !confirmName {
 		return "", fmt.Errorf("user cancelled project creation")
 	}
@@ -190,6 +190,6 @@ func copyEmbeddedTemplates(srcDir, destDir string, data map[string]string) error
 }
 
 func init() {
-	initCmd.Flags().String("repo", "", "ระบุ module name (เช่น github.com/user/project)")
+	initCmd.Flags().String("repo", "", "Specify the module name (e.g. github.com/user/project)")
 	RootCmd.AddCommand(initCmd)
 }

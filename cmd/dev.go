@@ -16,14 +16,14 @@ var devCmd = &cobra.Command{
 		// ตรวจสอบว่า swag ถูกติดตั้งหรือไม่
 		_, err := exec.LookPath("swag")
 		if err != nil {
-			fmt.Println("🚨 ไม่พบคำสั่ง 'swag' กำลังติดตั้ง...")
+			fmt.Println("🚨 'swag' not found, installing...")
 
 			installCmd := exec.Command("go", "install", "github.com/swaggo/swag/cmd/swag@latest")
 			installCmd.Stdout = os.Stdout
 			installCmd.Stderr = os.Stderr
 
 			if err := installCmd.Run(); err != nil {
-				fmt.Println("❌ ติดตั้ง swag ไม่สำเร็จ:", err)
+				fmt.Println("❌ Failed to install swag:", err)
 				os.Exit(1)
 			}
 			os.Exit(1)
@@ -32,7 +32,7 @@ var devCmd = &cobra.Command{
 		// ตรวจสอบว่า air ถูกติดตั้งหรือไม่
 		_, err = exec.LookPath("air")
 		if err != nil {
-			fmt.Println("🚨 ไม่พบคำสั่ง 'air' กำลังติดตั้ง...")
+			fmt.Println("🚨 'air' not found, installing...")
 
 			// ติดตั้ง air ด้วย go install
 			installCmd := exec.Command("go", "install", "github.com/cosmtrek/air@latest")
@@ -40,24 +40,24 @@ var devCmd = &cobra.Command{
 			installCmd.Stderr = os.Stderr
 
 			if err := installCmd.Run(); err != nil {
-				fmt.Println("❌ ติดตั้ง air ไม่สำเร็จ:", err)
+				fmt.Println("❌ Failed to install air:", err)
 				os.Exit(1)
 			}
 
-			fmt.Println("✅ ติดตั้ง air เรียบร้อยแล้ว กรุณาเปิด Terminal ใหม่ หรือเพิ่ม Go bin ลงใน PATH.")
+			fmt.Println("✅ air installed successfully, please open a new terminal or add Go bin to PATH.")
 			return
 		}
 
 		// เรียกใช้งาน air
 		os.Setenv("ENV", "dev")
-		fmt.Println("🚀 กำลังรัน dev ด้วย Air...")
+		fmt.Println("🚀 Running dev with Air...")
 		runCmd := exec.Command("air", "-c", ".air.toml")
 		runCmd.Stdout = os.Stdout
 		runCmd.Stderr = os.Stderr
 		runCmd.Stdin = os.Stdin
 
 		if err := runCmd.Run(); err != nil {
-			fmt.Println("❌ รัน air ไม่สำเร็จ:", err)
+			fmt.Println("❌ Failed to run air:", err)
 			os.Exit(1)
 		}
 	},

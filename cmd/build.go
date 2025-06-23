@@ -19,19 +19,19 @@ var (
 
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "สร้างโปรเจกต์แบบ obfuscate (ด้วย garble)",
+	Short: "Build the project with obfuscation (using garble)",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🔒 กำลัง build แบบ obfuscate ด้วย garble...")
+		fmt.Println("🔒 Building with obfuscation using garble...")
 
 		// ตรวจสอบว่า garble ติดตั้งอยู่หรือไม่
 		if _, err := exec.LookPath("garble"); err != nil {
-			fmt.Println("📦 กำลังติดตั้ง garble...")
+			fmt.Println("📦 Installing garble...")
 			install := exec.Command("go", "install", "mvdan.cc/garble@latest")
 			install.Stdout = os.Stdout
 			install.Stderr = os.Stderr
 			install.Env = os.Environ()
 			if err := install.Run(); err != nil {
-				fmt.Println("❌ ติดตั้ง garble ไม่สำเร็จ:", err)
+				fmt.Println("❌ Failed to install garble:", err)
 				return
 			}
 		}
@@ -42,7 +42,7 @@ var buildCmd = &cobra.Command{
 		if target != "" {
 			parts := strings.Split(target, "/")
 			if len(parts) != 2 {
-				fmt.Println("❌ รูปแบบ target ไม่ถูกต้อง. ใช้รูปแบบ เช่น linux/amd64 หรือ windows/amd64")
+				fmt.Println("❌ Invalid target format. Use format like linux/amd64 or windows/amd64")
 				return
 			}
 			goos, goarch = parts[0], parts[1]
@@ -76,17 +76,17 @@ var buildCmd = &cobra.Command{
 
 		fmt.Printf("🛠️  Target: %s/%s\n", goos, goarch)
 		if err := cmdGarble.Run(); err != nil {
-			fmt.Println("❌ ไม่สามารถ build ได้:", err)
+			fmt.Println("❌ Failed to build:", err)
 			return
 		}
 
-		fmt.Printf("✅ สร้างโปรแกรม obfuscated เรียบร้อยที่: %s\n", output)
+		fmt.Printf("✅ Obfuscated build completed: %s\n", output)
 	},
 }
 
 func init() {
-	buildCmd.Flags().StringVarP(&output, "output", "o", "", "ชื่อไฟล์ output (default: main)")
-	buildCmd.Flags().StringVarP(&target, "target", "t", "", "ระบบเป้าหมาย (เช่น linux/amd64, windows/amd64, darwin/arm64)")
+	buildCmd.Flags().StringVarP(&output, "output", "o", "", "Output file name (default: main)")
+	buildCmd.Flags().StringVarP(&target, "target", "t", "", "Target system (e.g. linux/amd64, windows/amd64, darwin/arm64)")
 	buildCmd.Flags().StringVarP(&semver, "version", "v", "dev", "Build version (default: dev)")
 	RootCmd.AddCommand(buildCmd)
 }
