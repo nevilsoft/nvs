@@ -16,47 +16,12 @@
 package routes
 
 import (
-	"log"
-
-	"github.com/burapha44/example/constants"
 	"github.com/burapha44/example/di"
-	"github.com/burapha44/example/handler"
 	"github.com/gofiber/fiber/v2"
 )
 
-func InitDIContainer() *di.AppContainer {
-	container, err := di.NewAppContainer()
-	if err != nil {
-		log.Panicf("❌ Failed to initialize DI Container: %v", err)
-	}
-	log.Println("✅ DI Container initialized successfully")
-	return container
-}
+func RegisterProductRoutes(app fiber.Router, c *di.AppContainer) {
 
-func SetupRoutes(app *fiber.App, container *di.AppContainer) {
-	v1API := app.Group("/api/v1")
-
-	RegisterRoutes(v1API, container)
-RegisterProductRoutes(v1API, container)
-	// (auto-generated: add more RegisterXxxRoutes here)
-
-	notFoundRoute(app)
-}
-
-func RegisterRoutes(api fiber.Router, container *di.AppContainer) {
-	mws := container.AuthMiddleware
-	baseC := container.BaseController
-	api.Get("/server/info", mws.RateLimit(constants.Tier3, 0), baseC.Health)
-
-}
-
-func notFoundRoute(a *fiber.App) {
-	// Register new special route.
-	a.Use(
-		// Anonymous function.
-		func(c *fiber.Ctx) error {
-			// Return HTTP 404 status and JSON response.
-			return handler.BuildError(c, constants.EndpointNotFoundCode, fiber.StatusNotFound, nil, true)
-		},
-	)
+	Product := c.ProductController
+	app.Get("/api/v1/ProductController/info", Product.Example)
 }

@@ -37,6 +37,7 @@ func NewAppContainer() (*AppContainer, error) {
 }
 
 type AppContainer struct {
-	AuthMiddleware *middleware.BaseMiddleware
-	BaseController *controllers.BaseController
+	AuthMiddleware    *middleware.BaseMiddleware
+	BaseController    *controllers.BaseController
+	ProductController *controllers.ProductController
 }

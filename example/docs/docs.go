@@ -15,6 +15,26 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/ProductController/info": {
+            "get": {
+                "description": "Get server info and dependencies status and uptime of server and more",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ProductController"
+                ],
+                "summary": "Get Server Info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.ServerInfoResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/server/info": {
             "get": {
                 "description": "Get server info and dependencies status and uptime of server and more",

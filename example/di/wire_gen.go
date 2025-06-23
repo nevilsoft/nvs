@@ -18,9 +18,11 @@ func NewAppContainer() (*AppContainer, error) {
 	baseMiddleware := middleware.NewBaseMiddleware()
 	baseService := services.NewBaseService()
 	baseController := controllers.NewBaseController(baseService)
+	productController := controllers.NewProductController()
 	appContainer := &AppContainer{
-		AuthMiddleware: baseMiddleware,
-		BaseController: baseController,
+		AuthMiddleware:    baseMiddleware,
+		BaseController:    baseController,
+		ProductController: productController,
 	}
 	return appContainer, nil
 }
@@ -28,6 +30,7 @@ func NewAppContainer() (*AppContainer, error) {
 // wire.go:
 
 type AppContainer struct {
-	AuthMiddleware *middleware.BaseMiddleware
-	BaseController *controllers.BaseController
+	AuthMiddleware    *middleware.BaseMiddleware
+	BaseController    *controllers.BaseController
+	ProductController *controllers.ProductController
 }

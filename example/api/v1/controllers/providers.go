@@ -21,5 +21,6 @@ import (
 
 // ProviderSet รวม Providers ของ Controllers
 var ProviderSet = wire.NewSet(
+	NewProductController,
 	NewBaseController,
 )
