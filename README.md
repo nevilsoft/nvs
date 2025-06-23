@@ -11,6 +11,7 @@ A powerful command-line interface tool for creating and managing Go projects wit
 - **Template System**: Embedded templates with dynamic rendering
 - **Security Features**: SHA256 verification and secure execution
 - **Interactive CLI**: User-friendly prompts and confirmations
+- **Route Generation**: Auto-generates route files with `_route.go` suffix (e.g., `user_route.go`, `product_route.go`)
 
 ## 📋 Prerequisites
 
@@ -115,6 +116,18 @@ nvs start main -e dev
 - Secure execution
 - Runner ID generation
 
+### Route Generation
+
+```bash
+# Generate route files from controllers (auto-naming with _route.go suffix)
+nvs generate routes
+```
+
+**Note:**
+- Generated route files use the `_route.go` suffix (e.g., `user_route.go`, `product_route.go`).
+- Controller names (e.g., `UserController`) are not included in the route file name.
+- The CLI will not overwrite `base.go` and will only update the auto-generated section in `SetupRoutes`.
+
 ## 🏗️ Project Structure
 
 ```
@@ -127,7 +140,7 @@ example/
 │   └── v1/
 │       ├── controllers/           # HTTP controllers
 │       ├── middleware/            # HTTP middleware
-│       ├── routes/                # Route definitions
+│       ├── routes/                # Route definitions (auto-generated: *_route.go)
 │       └── services/              # Business logic services
 ├── cmd/                           # Command handlers
 ├── config/                        # Configuration management
@@ -214,6 +227,12 @@ var templatesFS embed.FS
 3. **Template Rendering**: Process embedded templates
 4. **Code Generation**: Generate project structure
 5. **Build Execution**: Run build commands
+
+### Route Generation
+
+- Route files are generated with the `_route.go` suffix (e.g., `user_route.go`, `product_route.go`).
+- Controller names are not included in the route file name.
+- The CLI will not overwrite `base.go` and will only update the auto-generated section in `SetupRoutes`.
 
 ## 🛡️ Security Features
 
