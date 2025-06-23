@@ -293,13 +293,13 @@ nvs start main
 
 ## 📝 License
 
-© 2025 Nevilsoft Part., Ltd. All Rights Reserved.
+© 2025 Nevilsoft Ltd., Part. All Rights Reserved.
 
 This project contains confidential and proprietary information. Unauthorized copying, modification, distribution, or use is strictly prohibited.
 
 ## 📞 Support
 
-For support and questions, please contact the development team at Nevilsoft Part., Ltd.
+For support and questions, please contact the development team at Nevilsoft Ltd., Part.
 
 ---
 
