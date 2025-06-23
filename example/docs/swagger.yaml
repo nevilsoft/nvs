@@ -35,6 +35,20 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/ProductController/info:
+    get:
+      description: Get server info and dependencies status and uptime of server and
+        more
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.ServerInfoResponse'
+      summary: Get Server Info
+      tags:
+      - ProductController
   /api/v1/server/info:
     get:
       description: Get server info and dependencies status and uptime of server and
