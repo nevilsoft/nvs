@@ -23,7 +23,7 @@ A powerful command-line interface tool for creating and managing Go projects wit
 ### Installation
 
 ```bash
-go install https://github.com/nevilsoft/nvscli@latest
+go install github.com/nevilsoft/nvs@latest
 ```
 
 ### Basic Usage
