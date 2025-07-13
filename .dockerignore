@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*.test
+*.out
+coverage.out
+coverage.html
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Documentation
+README.md
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Build scripts
+build.sh
+build.bat
+Makefile
+
+# Docker
+Dockerfile*
+.dockerignore
+
+# Example project
+example/
+
+# Air configuration
+.air.toml
+
+# Environment files
+.env
+.env.local
+.env.*.local 

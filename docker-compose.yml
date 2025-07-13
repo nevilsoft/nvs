@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Development environment
+  nvs-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: nvs-dev
+    volumes:
+      - .:/app
+      - go-cache:/go
+    working_dir: /app
+    environment:
+      - GOOS=linux
+      - GOARCH=amd64
+      - CGO_ENABLED=0
+    command: ["go", "run", ".", "dev"]
+    ports:
+      - "8080:8080"
+    networks:
+      - nvs-network
+
+  # Production build
+  nvs-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nvs-prod
+    environment:
+      - ENV=prod
+    ports:
+      - "8080:8080"
+    networks:
+      - nvs-network
+    restart: unless-stopped
+
+  # Test environment
+  nvs-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: nvs-test
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["go", "test", "-v", "./..."]
+    networks:
+      - nvs-network
+
+  # Lint environment
+  nvs-lint:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: nvs-lint
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: |
+      sh -c "
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        golangci-lint run
+      "
+    networks:
+      - nvs-network
+
+volumes:
+  go-cache:
+    driver: local
+
+networks:
+  nvs-network:
+    driver: bridge 

@@ -18,6 +18,70 @@ A powerful command-line interface tool for creating and managing Go projects wit
 - Go 1.24.0 or higher
 - Git (for user configuration)
 
+## 🌍 Cross-Platform Support
+
+NVS CLI is fully compatible with Windows, Linux, and macOS. The tool automatically adapts to your operating system:
+
+### Windows Support
+- **Path Handling**: Uses Windows-style path separators (`\`)
+- **File Permissions**: Handles Windows file permission system
+- **Executable Detection**: Automatically adds `.exe` extension when needed
+- **Git Integration**: Works with Git for Windows
+- **Environment Variables**: Supports Windows environment variable syntax
+
+### Linux Support
+- **Unix Permissions**: Properly handles Unix file permissions (755, 644)
+- **Executable Files**: Automatically makes files executable when needed
+- **Path Handling**: Uses forward slashes (`/`) for paths
+- **Shell Integration**: Compatible with bash, zsh, and other shells
+
+### macOS Support
+- **Unix-like System**: Inherits all Linux compatibility features
+- **ARM64 Support**: Native support for Apple Silicon (M1/M2) processors
+- **Homebrew Integration**: Works seamlessly with Homebrew-installed Go
+- **macOS Permissions**: Handles macOS-specific permission requirements
+
+### Platform-Specific Features
+
+| Feature | Windows | Linux | macOS |
+|---------|---------|-------|-------|
+| Path Separators | `\` | `/` | `/` |
+| File Permissions | 666 (files), 666 (dirs) | 644 (files), 755 (dirs) | 644 (files), 755 (dirs) |
+| Executable Extension | `.exe` | None | None |
+| Git Integration | ✅ | ✅ | ✅ |
+| Hot Reload | ✅ | ✅ | ✅ |
+| Code Obfuscation | ✅ | ✅ | ✅ |
+| Cross-compilation | ✅ | ✅ | ✅ |
+
+### Installation by Platform
+
+#### Windows
+```cmd
+# Using Go install
+go install github.com/nevilsoft/nvs@latest
+
+# Add Go bin to PATH if needed
+set PATH=%PATH%;%GOPATH%\bin
+```
+
+#### Linux
+```bash
+# Using Go install
+go install github.com/nevilsoft/nvs@latest
+
+# Add to PATH if needed
+export PATH=$PATH:$GOPATH/bin
+```
+
+#### macOS
+```bash
+# Using Go install
+go install github.com/nevilsoft/nvs@latest
+
+# Add to PATH if needed
+export PATH=$PATH:$GOPATH/bin
+```
+
 ## 🏃‍♂️ Quick Start
 
 ### Installation
@@ -200,6 +264,52 @@ The build system supports various flags:
 
 ## 🔧 Development
 
+### Cross-Platform Development
+
+NVS CLI supports development across Windows, Linux, and macOS:
+
+#### Using Makefile (Linux/macOS)
+```bash
+# Build for current platform
+make build
+
+# Build for all platforms
+make build-all
+
+# Run tests
+make test
+
+# Run linter
+make lint
+
+# Clean build artifacts
+make clean
+```
+
+#### Using Build Scripts
+```bash
+# Linux/macOS
+./build.sh
+
+# Windows
+build.bat
+```
+
+#### Using Docker
+```bash
+# Development environment
+docker-compose up nvs-dev
+
+# Run tests
+docker-compose up nvs-test
+
+# Run linter
+docker-compose up nvs-lint
+
+# Production build
+docker-compose up nvs-prod
+```
+
 ### Adding New Commands
 
 1. Create a new command file in `cmd/`
@@ -227,6 +337,26 @@ var templatesFS embed.FS
 3. **Template Rendering**: Process embedded templates
 4. **Code Generation**: Generate project structure
 5. **Build Execution**: Run build commands
+
+### CI/CD Pipeline
+
+The project includes comprehensive CI/CD support:
+
+#### GitHub Actions
+- **Automatic Testing**: Runs on every push and pull request
+- **Cross-Platform Builds**: Builds for Windows, Linux, and macOS
+- **Release Management**: Automatic releases on tag creation
+- **Docker Integration**: Multi-architecture Docker images
+
+#### Build Matrix
+- **Linux**: amd64, arm64
+- **Windows**: amd64
+- **macOS**: amd64
+
+#### Docker Support
+- **Multi-stage Builds**: Optimized for size and security
+- **Non-root User**: Secure runtime environment
+- **Multi-architecture**: Support for different CPU architectures
 
 ### Route Generation
 
